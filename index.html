@@ -1,0 +1,823 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متجر الجوال الأخير</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* 🎨 لوحة الألوان المتناسقة تماماً مع خلفية وهوية الشعار */
+        :root {
+            --primary-color: #d35400; /* البرتقالي الدافئ للشعار */
+            --secondary-color: #1e1e24; /* الأسود الفحمي المائل للرمادي */
+            --bg-color: #f4f3ef; /* لون خلفية الصفحة */
+            --card-bg: #ffffff; /* بياض ناصع لكرت الجوال لكي يبرز */
+            --text-color: #2c3e50; /* لون النصوص الأساسية */
+            --light-orange: #fef5ed; /* خلفية ناعمة جداً لمنطقة المواصفات */
+            --shadow: 0 4px 10px rgba(0,0,0,0.06);
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-color); }
+        
+        /* الهيدر الممتد والانسيابي */
+        header { 
+            background: linear-gradient(135deg, var(--secondary-color), #2d2d35, var(--primary-color)); 
+            color: white; 
+            padding: 10px 30px; 
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            width: 100%;
+            height: 90px;
+        }
+        
+        /* يمين الهيدر: الأزرار والشعار */
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+        
+        .logo-img {
+            max-height: 70px;
+            width: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .admin-btn { 
+            background: #e67e22; 
+            color: white; 
+            border: none; 
+            padding: 8px 12px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 13px; 
+            font-weight: bold;
+            transition: 0.3s; 
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .admin-btn:hover { background: var(--primary-color); }
+
+        /* اسم المحل في المنطقة الفارغة */
+        .store-name {
+            font-size: 20px;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.5);
+            margin-right: 15px;
+            white-space: nowrap;
+        }
+
+        /* منتصف الهيدر: أرقام التواصل البارزة */
+        .header-center {
+            flex: 1.2;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .main-phone {
+            font-size: 26px;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.5);
+            letter-spacing: 1px;
+        }
+        .phone-label {
+            font-size: 11px;
+            opacity: 0.9;
+            color: #f3f3f3;
+            margin-top: 2px;
+        }
+
+        /* يسار الهيدر: النصوص المتحركة والإعلانات */
+        .header-left {
+            flex: 1.5;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100%;
+            overflow: hidden;
+        }
+        .left-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #fff;
+            text-align: left;
+            margin-bottom: 5px;
+        }
+        
+        /* حركة الأسماء المخصصة */
+        .marquee-container {
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+        }
+        .marquee-text {
+            display: inline-block;
+            animation: marqueeEffect 12s linear infinite;
+            font-size: 13px;
+            font-weight: bold;
+            color: #ffeaa7;
+        }
+        .marquee-text span {
+            margin-right: 50px;
+            display: inline-block;
+        }
+
+        @keyframes marqueeEffect {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* تنسيق المحتوى والأصناف */
+        .container { max-width: 1200px; margin: 25px auto; padding: 0 15px; }
+        
+        .nav-categories { 
+            display: flex; 
+            gap: 12px; 
+            overflow-x: auto; 
+            padding: 10px 5px; 
+            margin-bottom: 25px; 
+            scrollbar-width: thin; 
+        }
+        .nav-categories::-webkit-scrollbar { height: 5px; }
+        .nav-categories::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 10px; }
+        
+        .cat-btn { 
+            background: var(--card-bg); 
+            border: 1px solid #e0e0e0; 
+            padding: 10px 22px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            white-space: nowrap; 
+            transition: 0.3s; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            color: var(--secondary-color);
+        }
+        .cat-btn.active, .cat-btn:hover { 
+            background: var(--primary-color); 
+            color: white; 
+            border-color: var(--primary-color); 
+            box-shadow: 0 4px 10px rgba(211, 84, 0, 0.2);
+        }
+
+        /* شبكة المنتجات وتناسق الكروت */
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
+        
+        .card { 
+            background: var(--card-bg); 
+            border-radius: 12px; 
+            overflow: hidden; 
+            box-shadow: var(--shadow); 
+            transition: 0.3s; 
+            display: flex; 
+            flex-direction: column; 
+            border: 1px solid #e9e9e9;
+        }
+        .card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1); 
+            border-color: var(--primary-color);
+        }
+
+        /* 🌟 التعديل الجديد لجعل الصورة تظهر كاملة بدون اقتصاص */
+        .card-img { 
+            width: 100%; 
+            height: 250px; 
+            object-fit: contain; /* تظهر الصورة كاملة دون قص */
+            background: #f9f9fa; /* خلفية ناعمة لملء الفراغات إن وجدت */
+            border-bottom: 1px solid #f1f1f1;
+            padding: 5px;
+        }
+        
+        .card-body { 
+            padding: 15px; 
+            display: flex; 
+            flex-direction: column; 
+            flex-grow: 1; 
+        }
+        
+        .card-title { 
+            font-size: 17px; 
+            margin-bottom: 12px; 
+            color: var(--secondary-color); 
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        /* تنسيق خلفية مواصفات الجوال */
+        .specs-list { 
+            list-style: none; 
+            font-size: 13px; 
+            margin-bottom: 15px; 
+            flex-grow: 1; 
+            background-color: var(--light-orange); 
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #faebd7;
+        }
+        .specs-list li { margin-bottom: 8px; display: flex; align-items: center; gap: 10px; color: #4b4b4b; }
+        .specs-list li:last-child { margin-bottom: 0; }
+        .specs-list i { color: var(--primary-color); width: 16px; text-align: center; font-size: 14px; }
+        
+        .price-tag { 
+            font-size: 20px; 
+            font-weight: bold; 
+            color: var(--primary-color); 
+            text-align: center; 
+            border-top: 1px solid #f1f2f6; 
+            padding-top: 12px; 
+            margin-top: auto;
+        }
+
+        /* النوافذ المنبثقة (المودال) */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; overflow-y: auto; }
+        .modal-content { background: white; width: 90%; max-width: 600px; margin: 30px auto; padding: 25px; border-radius: 12px; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .close-btn { position: absolute; top: 15px; left: 15px; font-size: 24px; cursor: pointer; color: #aaa; }
+        .close-btn:hover { color: #333; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: var(--secondary-color); }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; }
+        
+        /* أزرار الرفع */
+        .upload-area { display: flex; gap: 10px; align-items: center; }
+        .upload-area input[type="file"] { display: none; }
+        .upload-btn { background: #3498db; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; gap: 5px; }
+        .upload-btn:hover { background: #2980b9; }
+        .upload-btn.cam-btn { background: #2ecc71; }
+        .upload-btn.cam-btn:hover { background: #27ae60; }
+        .file-name { font-size: 12px; color: #777; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .submit-btn { background: var(--secondary-color); color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; transition: 0.3s; }
+        .submit-btn:hover { background: #111; }
+        .submit-btn:disabled { background: #bdc3c7; cursor: not-allowed; }
+        
+        .section-divider { margin: 25px 0 15px 0; padding-bottom: 5px; border-bottom: 2px solid var(--primary-color); color: var(--secondary-color); font-weight: bold; }
+
+        .brand-list-item { display: flex; justify-content: space-between; align-items: center; background: #f1f2f6; padding: 8px 12px; border-radius: 5px; margin-bottom: 5px; }
+        .btn-icon { border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; color: white; }
+        .btn-red { background: #e74c3c; }
+
+        /* تذييل الصفحة المتناسق */
+        footer { background: var(--secondary-color); color: #a4b0be; text-align: center; padding: 25px; margin-top: 50px; font-size: 14px; border-top: 3px solid var(--primary-color); }
+        .footer-contacts { margin-top: 12px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+        .footer-contacts a { color: #fff; text-decoration: none; font-weight: bold; }
+        .footer-contacts a:hover { color: var(--primary-color); }
+
+        @media (max-width: 768px) {
+            header { flex-direction: column; height: auto; padding: 15px; gap: 12px; }
+            .header-right, .header-center, .header-left { flex: none; width: 100%; text-align: center; justify-content: center; }
+            .header-left .left-title { text-align: center; }
+            .header-right { justify-content: space-between; }
+            .store-name { margin-right: 0; margin-top: 5px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-right">
+            <button class="admin-btn" onclick="openLoginModal()"><i class="fa-solid fa-lock"></i> الإدارة</button>
+            <img src="https://i.ibb.co/b5G4J1Hh/FB-IMG-1774965872300.jpg" alt="شعار الجوال الأخير" class="logo-img">
+            <div class="store-name">الجوال الأخير للهواتف الذكية</div>
+        </div>
+        
+        <div class="header-center">
+            <div class="main-phone"><i class="fa-solid fa-phone-flip"></i> 772008003</div>
+            <div class="phone-label">خدمة العملاء والاستفسارات</div>
+        </div>
+        
+        <div class="header-left">
+            <div class="left-title">⭐ يتوفر لدينا مبرمج ومهندس جوالات</div>
+            <div class="marquee-container">
+                <div class="marquee-text">
+                    <span><i class="fa-solid fa-user-gear"></i> المبرمج / ابراهيم الكمالي 📱 775300161</span>
+                    <span><i class="fa-solid fa-screwdriver-wrench"></i> المهندس / عبدالرزاق الدروبي 🛠️ 776380638</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="nav-categories" id="categoriesNav">
+            <button class="cat-btn active" onclick="filterProducts('all')">الكل</button>
+        </div>
+        <div class="products-grid" id="productsDisplay"></div>
+    </div>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <span class="close-btn" onclick="closeModal('loginModal')">&times;</span>
+            <h3>تسجيل دخول الإدارة</h3><br>
+            <div class="form-group">
+                <label>البريد الإلكتروني</label>
+                <input type="email" id="email" placeholder="أدخل بريدك الإلكتروني">
+            </div>
+            <div class="form-group">
+                <label>كلمة المرور</label>
+                <input type="password" id="password" placeholder="أدخل كلمة المرور">
+            </div>
+            <button class="submit-btn" onclick="attemptLogin()">دخول</button>
+        </div>
+    </div>
+
+    <div id="adminModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <span class="close-btn" onclick="closeModal('adminModal')">&times;</span>
+            <h2>لوحة التحكم والمخزن</h2>
+
+            <h3 class="section-divider">إدارة البراندات (الأصناف)</h3>
+            <div id="adminBrandsList"></div>
+
+            <h3 class="section-divider">إضافة هاتف جديد</h3>
+            <div class="form-group">
+                <label>الماركة (البراند)</label>
+                <select id="phoneBrand" onchange="checkNewBrand(this)">
+                    <option value="">اختر براند...</option>
+                    <option value="NEW_BRAND" style="color:var(--primary-color); font-weight:bold;">➕ إضافة براند جديد</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>اسم الموديل</label>
+                <input type="text" id="phoneModel">
+            </div>
+            <div class="form-group">
+                <label>الرام (RAM)</label>
+                <input type="text" id="phoneRam">
+            </div>
+            <div class="form-group">
+                <label>التخزين (Storage)</label>
+                <input type="text" id="phoneStorage">
+            </div>
+            <div class="form-group">
+                <label>الشبكة والنظام</label>
+                <input type="text" id="phoneNetwork" placeholder="مثال: cdma + GSM">
+            </div>
+            <div class="form-group">
+                <label>عدد الشرائح</label>
+                <input type="text" id="phoneSimCount" placeholder="مثال: شريحة أو شريحتين">
+            </div>
+            <div class="form-group">
+                <label>السعر (بالريال أو الدولار)</label>
+                <input type="number" id="phonePrice">
+            </div>
+            
+            <div class="form-group">
+                <label>صورة الجوال من الجهاز</label>
+                <div class="upload-area">
+                    <label for="imgFile" class="upload-btn"><i class="fa-solid fa-folder-open"></i> استعراض الملفات</label>
+                    <input type="file" id="imgFile" accept="image/*" onchange="handleFileUpload(this, 'img_url_span', 'normal')">
+                    <span id="img_url_span" class="file-name">لم يتم اختيار ملف</span>
+                </div>
+                <input type="hidden" id="phoneImgUrl">
+            </div>
+
+            <div class="form-group">
+                <label>التقاط صورة حية (مباشرة)</label>
+                <div class="upload-area">
+                    <label for="imgLive" class="upload-btn cam-btn"><i class="fa-solid fa-camera"></i> فتح الكاميرا</label>
+                    <input type="file" id="imgLive" accept="image/*" capture="environment" onchange="handleFileUpload(this, 'img_live_span', 'live')">
+                    <span id="img_live_span" class="file-name">لم يتم التقاط صورة</span>
+                </div>
+                <input type="hidden" id="phoneImgUrlLive">
+            </div>
+
+            <button class="submit-btn" id="savePhoneBtn" onclick="addPhone()"><i class="fa-solid fa-plus"></i> حفظ في المخزن</button>
+
+            <h3 class="section-divider">تعديل مواصفات الهواتف</h3>
+            
+            <div class="form-group">
+                <label>1. اختر البراند أولاً</label>
+                <select id="filterBrandSelect" onchange="loadPhonesForBrand()">
+                    <option value="">اختر براند لعرض هواتفه...</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="phoneSelectGroup" style="display:none;">
+                <label>2. اختر الجوال للتعديل</label>
+                <select id="filterPhoneSelect" onchange="openEditFromDropdown()">
+                    <option value="">اختر الجوال المطلوب...</option>
+                </select>
+            </div>
+            
+        </div>
+    </div>
+
+    <div id="editPhoneModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close-btn" onclick="closeModal('editPhoneModal')">&times;</span>
+            <h3>تعديل بيانات الهاتف</h3><br>
+            
+            <input type="hidden" id="editPhoneId">
+            
+            <div class="form-group">
+                <label>الماركة</label>
+                <input type="text" id="editPhoneBrand" disabled style="background:#eee;">
+            </div>
+            <div class="form-group">
+                <label>اسم الموديل</label>
+                <input type="text" id="editPhoneModel">
+            </div>
+            <div class="form-group">
+                <label>الرام (RAM)</label>
+                <input type="text" id="editPhoneRam">
+            </div>
+            <div class="form-group">
+                <label>التخزين</label>
+                <input type="text" id="editPhoneStorage">
+            </div>
+            <div class="form-group">
+                <label>الشبكة والنظام</label>
+                <input type="text" id="editPhoneNetwork">
+            </div>
+            <div class="form-group">
+                <label>عدد الشرائح</label>
+                <input type="text" id="editPhoneSim">
+            </div>
+            <div class="form-group">
+                <label>السعر</label>
+                <input type="number" id="editPhonePrice">
+            </div>
+            
+            <button class="submit-btn" onclick="savePhoneEdits()"><i class="fa-solid fa-check"></i> حفظ التعديلات</button>
+            <br><br>
+            <button class="submit-btn" style="background:#e74c3c;" onclick="deletePhoneFromEdit()"><i class="fa-solid fa-trash"></i> حذف هذا الجوال نهائياً</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>جميع الحقوق محفوظة &copy; 2026 - المهندس إبراهيم الكمالي</p>
+        <div class="footer-contacts">
+            <span>إدارة المحل: <a href="tel:772008003">772008003</a></span>
+            <span>البرمجة: <a href="tel:775300161">775300161</a></span>
+        </div>
+    </footer>
+
+    <script>
+        const SUPABASE_URL = 'https://njgkuwseeixrhzwlckiq.supabase.co'; 
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qZ2t1d3NlZWl4cmh6d2xja2lxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNDY3MjQsImV4cCI6MjA5MDcyMjcyNH0.539fD_RQMo-e7npP-CNEL5Mp3zuLIr8s9mATsqyDQTI'; 
+        const IMGBB_API_KEY = 'd1da5400213682faed3e69c3c7898285'; 
+
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentFilter = 'all';
+        window.allPhones = [];
+        let brandsList = [];
+
+        function openLoginModal() { document.getElementById('loginModal').style.display = 'block'; }
+        function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
+        
+        // الدالة الجديدة لتسجيل الدخول بأمان تام عبر سوبابيز
+        async function attemptLogin() {
+            const email = document.getElementById('email').value.trim();
+            const pass = document.getElementById('password').value.trim();
+            
+            if (!email || !pass) {
+                alert("الرجاء إدخال البريد الإلكتروني وكلمة المرور!");
+                return;
+            }
+
+            try {
+                // محاولة تسجيل الدخول عبر سوبابيز
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: pass,
+                });
+
+                if (error) throw error;
+
+                // في حال تطابق البيانات بنجاح
+                alert("تم تسجيل الدخول بنجاح يا هندس!");
+                closeModal('loginModal');
+                document.getElementById('adminModal').style.display = 'block';
+                document.getElementById('email').value = '';
+                document.getElementById('password').value = '';
+                
+                populateAdminBrandsSelect();
+                renderAdminBrandsList(); 
+                populateEditBrandsDropdown();
+                
+            } catch (error) {
+                alert("بيانات الدخول غير صحيحة أو حدث خطأ: " + error.message);
+            }
+        }
+
+        async function handleFileUpload(input, spanId, type) {
+            const file = input.files[0];
+            const span = document.getElementById(spanId);
+            const saveBtn = document.getElementById('savePhoneBtn');
+            
+            if (!file) return;
+
+            span.innerText = "جاري الرفع...";
+            span.style.color = "#d35400";
+            saveBtn.disabled = true; 
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    const directUrl = result.data.url;
+                    span.innerText = "تم الرفع بنجاح ✓";
+                    span.style.color = "#2ecc71";
+                    
+                    if (type === 'normal') {
+                        document.getElementById('phoneImgUrl').value = directUrl;
+                    } else if (type === 'live') {
+                        document.getElementById('phoneImgUrlLive').value = directUrl;
+                    }
+                } else {
+                    throw new Error("فشل الرفع");
+                }
+            } catch (error) {
+                alert('خطأ أثناء رفع الصورة لموقع ImgBB. تأكد من اتصال الإنترنت.');
+                span.innerText = "فشل الرفع ✖";
+                span.style.color = "#e74c3c";
+            } finally {
+                saveBtn.disabled = false; 
+            }
+        }
+
+        function checkNewBrand(selectElement) {
+            if (selectElement.value === "NEW_BRAND") {
+                const newBrand = prompt("أدخل اسم البراند الجديد:");
+                if (newBrand && newBrand.trim() !== "") {
+                    const trimmedBrand = newBrand.trim();
+                    brandsList.push(trimmedBrand);
+                    populateAdminBrandsSelect();
+                    renderAdminBrandsList();
+                    populateEditBrandsDropdown();
+                    selectElement.value = trimmedBrand;
+                } else {
+                    selectElement.selectedIndex = 0;
+                }
+            }
+        }
+
+        function populateAdminBrandsSelect() {
+            const select = document.getElementById('phoneBrand');
+            select.innerHTML = '<option value="">اختر براند...</option>';
+            select.innerHTML += '<option value="NEW_BRAND" style="color:var(--primary-color); font-weight:bold;">➕ إضافة براند جديد</option>';
+            brandsList.forEach(brand => {
+                select.innerHTML += `<option value="${brand}">${brand}</option>`;
+            });
+        }
+
+        function populateEditBrandsDropdown() {
+            const select = document.getElementById('filterBrandSelect');
+            select.innerHTML = '<option value="">اختر براند لعرض هواتفه...</option>';
+            brandsList.forEach(brand => {
+                select.innerHTML += `<option value="${brand}">${brand}</option>`;
+            });
+            document.getElementById('phoneSelectGroup').style.display = 'none';
+        }
+
+        function loadPhonesForBrand() {
+            const selectedBrand = document.getElementById('filterBrandSelect').value;
+            const phoneSelect = document.getElementById('filterPhoneSelect');
+            const phoneGroup = document.getElementById('phoneSelectGroup');
+
+            if (!selectedBrand) {
+                phoneGroup.style.display = 'none';
+                return;
+            }
+
+            const filteredPhones = window.allPhones.filter(p => p.brand === selectedBrand);
+            
+            phoneSelect.innerHTML = '<option value="">اختر الجوال المطلوب...</option>';
+            filteredPhones.forEach(phone => {
+                phoneSelect.innerHTML += `<option value="${phone.id}">${phone.phone_name}</option>`;
+            });
+
+            phoneGroup.style.display = 'block';
+        }
+
+        function openEditFromDropdown() {
+            const phoneId = document.getElementById('filterPhoneSelect').value;
+            if (!phoneId) return;
+
+            openEditPhoneModal(parseInt(phoneId));
+            document.getElementById('filterPhoneSelect').selectedIndex = 0;
+        }
+
+        function renderAdminBrandsList() {
+            const div = document.getElementById('adminBrandsList');
+            div.innerHTML = '';
+            if (brandsList.length === 0) {
+                div.innerHTML = '<p style="font-size:12px; color:#777;">لا توجد أصناف مسجلة حالياً.</p>';
+                return;
+            }
+            brandsList.forEach(brand => {
+                div.innerHTML += `
+                    <div class="brand-list-item">
+                        <span><strong>${brand}</strong></span>
+                        <button class="btn-icon btn-red" onclick="deleteBrand('${brand}')"><i class="fa-solid fa-trash"></i> حذف الصنف</button>
+                    </div>
+                `;
+            });
+        }
+
+        async function deleteBrand(brandName) {
+            if (!confirm(`تحذير: هل أنت متأكد من حذف براند (${brandName})؟ هذا سيؤدي لحذف جميع الهواتف التابعة له من المخزن!`)) return;
+
+            try {
+                const { error } = await supabaseClient.from('Phones').delete().eq('brand', brandName);
+                if (error) throw error;
+                alert(`تم حذف البراند وكل هواتفه بنجاح!`);
+                await fetchPhones();
+                renderAdminBrandsList();
+                populateAdminBrandsSelect();
+                populateEditBrandsDropdown();
+            } catch (error) { alert('خطأ أثناء الحذف: ' + error.message); }
+        }
+
+        async function addPhone() {
+            const brand = document.getElementById('phoneBrand').value;
+            const model = document.getElementById('phoneModel').value.trim();
+            const ram = document.getElementById('phoneRam').value.trim();
+            const storage = document.getElementById('phoneStorage').value.trim();
+            const network = document.getElementById('phoneNetwork').value.trim();
+            const simCount = document.getElementById('phoneSimCount').value.trim();
+            const price = document.getElementById('phonePrice').value.trim();
+            
+            const imgUrl = document.getElementById('phoneImgUrl').value;
+            const imgUrlLive = document.getElementById('phoneImgUrlLive').value;
+
+            if (!brand || brand === "NEW_BRAND" || !model || !price) {
+                alert('الرجاء تعبئة البيانات الأساسية!');
+                return;
+            }
+
+            const randomId = Math.floor(100000 + Math.random() * 900000);
+            const finalImg = imgUrl || imgUrlLive || 'https://via.placeholder.com/280x250?text=No+Image';
+
+            try {
+                const { error } = await supabaseClient.from('Phones').insert([{ 
+                        id: randomId, brand: brand, phone_name: model, 
+                        ram: parseInt(ram) || 0, storag: parseInt(storage) || 0, 
+                        network_sim: network, sim_count: simCount, price: parseFloat(price),
+                        img_url: finalImg,
+                        img_url_live: imgUrlLive 
+                }]);
+
+                if (error) throw error;
+
+                alert('تم الحفظ بنجاح!');
+                
+                document.getElementById('phoneBrand').selectedIndex = 0;
+                ['phoneModel', 'phoneRam', 'phoneStorage', 'phoneNetwork', 'phoneSimCount', 'phonePrice', 'phoneImgUrl', 'phoneImgUrlLive'].forEach(id => document.getElementById(id).value = '');
+                document.getElementById('img_url_span').innerText = "لم يتم اختيار ملف";
+                document.getElementById('img_url_span').style.color = "#777";
+                document.getElementById('img_live_span').innerText = "لم يتم التقاط صورة";
+                document.getElementById('img_live_span').style.color = "#777";
+                document.getElementById('imgFile').value = '';
+                document.getElementById('imgLive').value = '';
+                
+                await fetchPhones(); 
+            } catch (error) { alert('حدث خطأ أثناء الحفظ: ' + error.message); }
+        }
+
+        async function fetchPhones() {
+            try {
+                const { data, error } = await supabaseClient.from('Phones').select('*');
+                if (error) throw error;
+                window.allPhones = data || [];
+                brandsList = [...new Set(window.allPhones.map(p => p.brand))].filter(b => b);
+                
+                renderCategories();
+                renderProducts();
+            } catch (error) { console.error("Error fetching data:", error); }
+        }
+
+        function renderCategories() {
+            const nav = document.getElementById('categoriesNav');
+            nav.innerHTML = `<button class="cat-btn ${currentFilter === 'all' ? 'active' : ''}" onclick="filterProducts('all')">الكل</button>`;
+            brandsList.forEach(brand => {
+                nav.innerHTML += `<button class="cat-btn ${currentFilter === brand ? 'active' : ''}" onclick="filterProducts('${brand}')">${brand}</button>`;
+            });
+        }
+
+        function renderProducts() {
+            const display = document.getElementById('productsDisplay');
+            display.innerHTML = '';
+            const filtered = currentFilter === 'all' ? window.allPhones : window.allPhones.filter(p => p.brand === currentFilter);
+                
+            if (filtered.length === 0) {
+                display.innerHTML = `<p style="grid-column: 1/-1; text-align: center; padding: 50px; color: #777;">لا توجد هواتف.</p>`;
+                return;
+            }
+            
+            filtered.forEach(phone => {
+                display.innerHTML += `
+                    <div class="card">
+                        <img src="${phone.img_url}" alt="${phone.phone_name}" class="card-img" onerror="this.src='https://via.placeholder.com/280x250?text=Image+Error'">
+                        <div class="card-body">
+                            <div class="card-title">${phone.phone_name} (${phone.brand})</div>
+                            <ul class="specs-list">
+                                <li><i class="fa-solid fa-microchip"></i> الرام: ${phone.ram || '0'} GB</li>
+                                <li><i class="fa-solid fa-database"></i> التخزين: ${phone.storag || '0'} GB</li>
+                                <li><i class="fa-solid fa-wifi"></i> الشبكة: ${phone.network_sim || 'غير محدد'}</li>
+                                <li><i class="fa-solid fa-mobile-screen"></i> الشرايح: ${phone.sim_count || 'غير محدد'}</li>
+                            </ul>
+                            <div class="price-tag">${phone.price} ريال</li>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function filterProducts(brand) {
+            currentFilter = brand;
+            renderCategories();
+            renderProducts();
+        }
+
+        function openEditPhoneModal(id) {
+            const phone = window.allPhones.find(p => p.id === id);
+            if (!phone) return;
+
+            document.getElementById('editPhoneId').value = phone.id;
+            document.getElementById('editPhoneBrand').value = phone.brand;
+            document.getElementById('editPhoneModel').value = phone.phone_name;
+            document.getElementById('editPhoneRam').value = phone.ram;
+            document.getElementById('editPhoneStorage').value = phone.storag;
+            document.getElementById('editPhoneNetwork').value = phone.network_sim || '';
+            document.getElementById('editPhoneSim').value = phone.sim_count || '';
+            document.getElementById('editPhonePrice').value = phone.price;
+
+            document.getElementById('editPhoneModal').style.display = 'block';
+        }
+
+        async function savePhoneEdits() {
+            const id = document.getElementById('editPhoneId').value;
+            const model = document.getElementById('editPhoneModel').value.trim();
+            const ram = document.getElementById('editPhoneRam').value;
+            const storage = document.getElementById('editPhoneStorage').value;
+            const network = document.getElementById('editPhoneNetwork').value.trim();
+            const sim = document.getElementById('editPhoneSim').value.trim();
+            const price = document.getElementById('editPhonePrice').value;
+
+            if (!model || !price) return alert('الاسم والسعر مطلوبان!');
+
+            try {
+                const { error } = await supabaseClient.from('Phones').update({
+                    phone_name: model,
+                    ram: parseInt(ram) || 0,
+                    storag: parseInt(storage) || 0,
+                    network_sim: network,
+                    sim_count: sim,
+                    price: parseFloat(price)
+                }).eq('id', id);
+
+                if (error) throw error;
+
+                alert('تم تحديث البيانات بنجاح!');
+                closeModal('editPhoneModal');
+                await fetchPhones();
+                populateEditBrandsDropdown();
+            } catch (error) { alert('حدث خطأ أثناء التعديل: ' + error.message); }
+        }
+
+        async function deletePhoneFromEdit() {
+            const id = document.getElementById('editPhoneId').value;
+            const model = document.getElementById('editPhoneModel').value;
+            
+            if (!confirm(`هل أنت متأكد من حذف الهاتف "${model}" نهائياً؟`)) return;
+
+            try {
+                const { error } = await supabaseClient.from('Phones').delete().eq('id', id);
+                if (error) throw error;
+                alert('تم الحذف بنجاح!');
+                closeModal('editPhoneModal');
+                await fetchPhones();
+                populateEditBrandsDropdown();
+            } catch (error) { alert('خطأ أثناء الحذف: ' + error.message); }
+        }
+
+        fetchPhones();
+    </script>
+</body>
+</html>
